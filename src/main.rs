@@ -1,19 +1,17 @@
 use leptos::*;
 
+mod board;
 mod entity;
 
-use entity::{EntityData, EntityToken};
+use board::BoardInvestigativo;
 
 fn main() {
     console_error_panic_hook::set_once();
+    console_log::init().expect("Não foi possível iniciar logs");
 
     mount_to_body(|| {
         view! {
-            <div>
-                <EntityToken data=EntityData::new("Fulano de tal")/>
-                <EntityToken data=EntityData::new("Ciclaninho")/>
-                <EntityToken data=EntityData::new("Fulana")/>
-            </div>
+            <BoardInvestigativo />
         }
     })
 }
