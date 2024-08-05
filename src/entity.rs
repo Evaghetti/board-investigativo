@@ -1,13 +1,13 @@
 use ev::MouseEvent;
 use leptos::*;
 
+#[derive(Clone, Debug)]
 pub struct EntityData {
     name: String,
     // TODO: comentei só pra tirar os warnings, quando for fazer o editor de entidades recolocar
     // description: String,
     profile_url: String,
-    x: i32,
-    y: i32,
+    position: RwSignal<(i32, i32)>,
 }
 
 impl EntityData {
@@ -20,9 +20,16 @@ impl EntityData {
             profile_url:
                 "https://i.pinimg.com/originals/f1/0f/f7/f10ff70a7155e5ab666bcdd1b45b726d.jpg"
                     .to_string(),
-            x,
-            y,
+            position: create_rw_signal((x, y)),
         }
+    }
+
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    pub fn position(&self) -> RwSignal<(i32, i32)> {
+        self.position
     }
 }
 
@@ -32,7 +39,6 @@ pub fn EntityToken(
     global_entity_index: ReadSignal<u64>,
     set_global_entity_index: WriteSignal<u64>,
 ) -> impl IntoView {
-    let (position, set_position) = create_signal((data.x, data.y));
     let (mouse_offset, set_mouse_offset) = create_signal((0, 0));
     let (dragging, set_dragging) = create_signal(false);
     let (entity_index, set_entity_index) = create_signal(global_entity_index.get_untracked());
@@ -47,7 +53,10 @@ pub fn EntityToken(
         }
 
         let mouse_pos = (event.x(), event.y());
-        let new_offset = (mouse_pos.0 - position().0, mouse_pos.1 - position().1);
+        let new_offset = (
+            mouse_pos.0 - data.position.get().0,
+            mouse_pos.1 - data.position.get().1,
+        );
         set_mouse_offset(new_offset);
 
         if global_entity_index() != entity_index() {
@@ -73,15 +82,16 @@ pub fn EntityToken(
             return;
         }
 
-        set_position((event.x() - mouse_offset().0, event.y() - mouse_offset().1));
+        data.position
+            .set((event.x() - mouse_offset().0, event.y() - mouse_offset().1));
     };
     window_event_listener(ev::mousemove, mouse_move_event);
 
     view! {
         <article
             class="token"
-            style:left=move || format!("{}px", position().0)
-            style:top=move || format!("{}px", position().1)
+            style:left=move || format!("{}px", data.position.get().0)
+            style:top=move || format!("{}px",  data.position.get().1)
             style:z-index=move || format!("{}", entity_index())
             on:mouseup=click_out_event
             on:mousedown=click_in_event>
