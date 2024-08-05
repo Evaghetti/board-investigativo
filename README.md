@@ -7,6 +7,7 @@ Eu tentei fazer com que o repo baixasse a nightly do rust automaticamente, caso 
 ```bash
 rustup toolchain install nightly
 rustup override set nightly # Dentro do diretório do projeto
+rustup target add wasm32-unknown-unknown
 ```
 Agora só rodar:
 ```bash
