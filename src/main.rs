@@ -2,6 +2,7 @@ use leptos::*;
 
 mod board;
 mod entity;
+mod line;
 
 use board::BoardInvestigativo;
 
