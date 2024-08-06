@@ -1,10 +1,11 @@
 use leptos::*;
+use uuid::Uuid;
 
 use crate::entity::CARD_WIDTH_SIZE;
 
 #[derive(Default, Clone)]
 pub struct ConnectionLineData {
-    pub id: u64,
+    id: Uuid,
     begin_position: RwSignal<(i32, i32)>,
     end_position: RwSignal<(i32, i32)>,
 }
@@ -12,10 +13,15 @@ pub struct ConnectionLineData {
 impl ConnectionLineData {
     pub fn new(begin_position: RwSignal<(i32, i32)>, end_position: RwSignal<(i32, i32)>) -> Self {
         Self {
+            id: Uuid::new_v4(),
             begin_position,
             end_position,
             ..Default::default()
         }
+    }
+
+    pub fn id(&self) -> Uuid {
+        self.id.clone()
     }
 }
 

@@ -1,10 +1,12 @@
 use ev::MouseEvent;
 use leptos::*;
+use uuid::Uuid;
 
 pub const CARD_WIDTH_SIZE: i32 = 180;
 
 #[derive(Clone, Debug)]
 pub struct EntityData {
+    id: Uuid,
     name: String,
     // TODO: comentei só pra tirar os warnings, quando for fazer o editor de entidades recolocar
     // description: String,
@@ -15,6 +17,7 @@ pub struct EntityData {
 impl EntityData {
     pub fn new(name: &str, x: i32, y: i32) -> Self {
         Self {
+            id: Uuid::new_v4(),
             name: name.to_owned(),
             // TODO: comentei só pra tirar os warnings, quando for fazer o editor de entidades recolocar
             // description: "".to_string(),
@@ -22,16 +25,16 @@ impl EntityData {
             profile_url:
                 "https://i.pinimg.com/originals/f1/0f/f7/f10ff70a7155e5ab666bcdd1b45b726d.jpg"
                     .to_string(),
-            position: create_rw_signal((x, y)),
+            position: create_rw_signal((x - CARD_WIDTH_SIZE / 2, y)),
         }
-    }
-
-    pub fn name(&self) -> String {
-        self.name.clone()
     }
 
     pub fn position(&self) -> RwSignal<(i32, i32)> {
         self.position
+    }
+
+    pub fn id(&self) -> Uuid {
+        self.id.clone()
     }
 }
 
