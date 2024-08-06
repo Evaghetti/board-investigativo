@@ -39,11 +39,15 @@ impl EntityData {
 }
 
 #[component]
-pub fn EntityToken(
+pub fn EntityToken<PinFn>(
     data: EntityData,
     global_entity_index: ReadSignal<u64>,
     set_global_entity_index: WriteSignal<u64>,
-) -> impl IntoView {
+    pin_callback: PinFn,
+) -> impl IntoView
+where
+    PinFn: Fn(MouseEvent, Uuid) + 'static,
+{
     let (mouse_offset, set_mouse_offset) = create_signal((0, 0));
     let (dragging, set_dragging) = create_signal(false);
     let (entity_index, set_entity_index) = create_signal(global_entity_index.get_untracked());
@@ -92,6 +96,7 @@ pub fn EntityToken(
     };
     window_event_listener(ev::mousemove, mouse_move_event);
 
+    let id = data.id();
     view! {
         <article
             class="token"
@@ -100,7 +105,8 @@ pub fn EntityToken(
             style:z-index=move || format!("{}", entity_index())
             on:mouseup=click_out_event
             on:mousedown=click_in_event>
-            <img src=data.profile_url/>
+            <img id="pin" src="assets/pin.svg" on:click=move |ev| pin_callback(ev, id) />
+            <img id="profile" src=data.profile_url/>
             <h2>{data.name}</h2>
         </article>
     }
