@@ -2,16 +2,19 @@ use ev::MouseEvent;
 use leptos::*;
 use uuid::Uuid;
 
-use crate::entity::{EntityData, EntityToken};
+use crate::card::{Card, CardData, Position};
+use crate::entity::{EntityData, EntityInfo};
 use crate::line::{ConnectionLine, ConnectionLineData};
 
 #[component]
 pub fn BoardInvestigativo() -> impl IntoView {
-    let (connection_lines, set_connection_lines) = create_signal::<Vec<ConnectionLineData>>(vec![]);
-    let (entities, set_entities) = create_signal::<Vec<EntityData>>(vec![]);
-    let (entity_index, set_entity_index) = create_signal(5u64);
+    let (cards, set_cards) = create_signal(Vec::<CardData>::new());
+    let (entities, set_entities) = create_signal(Vec::<EntityData>::new());
+    let (connection_lines, set_connection_lines) = create_signal(Vec::<ConnectionLineData>::new());
+
+    let (global_index, set_global_index) = create_signal(5u64);
     let (begin_new_line_position, set_begin_new_line_position) =
-        create_signal::<Option<RwSignal<(i32, i32)>>>(None);
+        create_signal::<Option<RwSignal<Position>>>(None);
 
     let add_new_entity = move |event: MouseEvent| {
         // Apenas ao duplo click
@@ -19,26 +22,39 @@ pub fn BoardInvestigativo() -> impl IntoView {
             return;
         }
 
-        let new_entity = EntityData::new("Fulano", event.x(), event.y());
-        set_entities.update(move |entities| entities.push(new_entity));
+        log::info!("Criando card em {} {}", event.x(), event.y());
+        let new_card = CardData::new(event.x(), event.y());
+        let new_entity: EntityData = EntityData::new(new_card.id());
+
+        set_entities.update(move |e| e.push(new_entity));
+        set_cards.update(move |c| c.push(new_card));
     };
 
     let add_new_line = move |_event: MouseEvent, id: Uuid| {
-        entities()
+        cards()
             .iter()
-            .find(|e| e.id() == id)
-            .and_then(|e| Some(e.position()))
-            .and_then(|p| {
+            .find(|c| c.id() == id)
+            .and_then(|c| Some(c.position()))
+            .and_then(|current_card_position| {
                 if let Some(begin) = begin_new_line_position() {
-                    let new_line = ConnectionLineData::new(begin, p);
+                    let new_line = ConnectionLineData::new(begin, current_card_position);
+                    log::info!(
+                        "Encerrando a criação de conexão em {:?}",
+                        current_card_position.get_untracked()
+                    );
                     set_connection_lines.update(move |lines| lines.push(new_line));
                     set_begin_new_line_position(None);
                 } else {
-                    set_begin_new_line_position(Some(p));
+                    log::info!(
+                        "Começando a criar conexão em {:?}",
+                        current_card_position.get_untracked()
+                    );
+                    set_begin_new_line_position(Some(current_card_position));
                 }
 
                 Some(())
-            });
+            })
+            .expect("Não deveria ser possível adicionar uma conexão a um card que não existe");
     };
 
     view! {
@@ -51,17 +67,26 @@ pub fn BoardInvestigativo() -> impl IntoView {
                         <ConnectionLine data=line/>
                     } />
             </svg>
+
             <For
-                each=move || entities()
-                key=|entity| entity.id()
-                children=move|entity| view! {
-                    <EntityToken
-                        data=entity
-                        set_global_entity_index=set_entity_index
-                        global_entity_index=entity_index
-                        pin_callback=add_new_line />
-                } />
-            <p>{move || entities().len()}</p>
+                each=move || cards.get()
+                key=|c| c.id()
+                children=move |c| {
+                    let entity = entities()
+                        .iter()
+                        .find(|e| e.id() == c.id())
+                        .expect("Todo card deveria ter uma entidade")
+                        .clone();
+                    view! {
+                        <Card
+                            data=c
+                            global_card_index=global_index
+                            set_global_card_index=set_global_index
+                            pin_callback=add_new_line>
+                            <EntityInfo data=entity/>
+                        </Card>
+                    }
+                }/>
         </main>
     }
 }

@@ -1,6 +1,7 @@
 use leptos::*;
 
 mod board;
+mod card;
 mod entity;
 mod line;
 
