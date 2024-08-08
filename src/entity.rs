@@ -44,9 +44,14 @@ where
 }
 
 #[component]
-pub fn EntityEdit<SubmitFn>(data: EntityData, submit: SubmitFn) -> impl IntoView
+pub fn EntityEdit<SubmitFn, DeleteFn>(
+    data: EntityData,
+    submit_edits_callback: SubmitFn,
+    delete_entity_callback: DeleteFn,
+) -> impl IntoView
 where
     SubmitFn: Fn(MouseEvent, EntityData) + 'static,
+    DeleteFn: Fn(MouseEvent, EntityData) + 'static,
 {
     log::info!("Editando entidade {}", data.id());
     view! {
@@ -59,8 +64,12 @@ where
             {data.description.get()}
         </textarea>
         <button
-            on:click=move |ev| submit(ev, data)>
+            on:click=move |ev| submit_edits_callback(ev, data)>
             Salvar
+        </button>
+        <button
+            on:click=move |ev| delete_entity_callback(ev, data)>
+            Deletar
         </button>
     }
 }

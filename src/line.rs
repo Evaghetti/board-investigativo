@@ -6,14 +6,23 @@ use crate::{card::Position, entity::CARD_WIDTH_SIZE};
 #[derive(Default, Clone)]
 pub struct ConnectionLineData {
     id: Uuid,
+    id_begin: Uuid,
+    id_end: Uuid,
     begin_position: RwSignal<Position>,
     end_position: RwSignal<Position>,
 }
 
 impl ConnectionLineData {
-    pub fn new(begin_position: RwSignal<Position>, end_position: RwSignal<Position>) -> Self {
+    pub fn new(
+        id_begin: Uuid,
+        id_end: Uuid,
+        begin_position: RwSignal<Position>,
+        end_position: RwSignal<Position>,
+    ) -> Self {
         Self {
             id: Uuid::new_v4(),
+            id_begin,
+            id_end,
             begin_position,
             end_position,
             ..Default::default()
@@ -22,6 +31,14 @@ impl ConnectionLineData {
 
     pub fn id(&self) -> Uuid {
         self.id.clone()
+    }
+
+    pub fn id_begin(&self) -> Uuid {
+        self.id_begin.clone()
+    }
+
+    pub fn id_end(&self) -> Uuid {
+        self.id_end.clone()
     }
 }
 

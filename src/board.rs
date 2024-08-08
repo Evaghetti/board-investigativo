@@ -13,6 +13,12 @@ struct CardEntityState {
     editing: bool,
 }
 
+#[derive(Clone, Copy, Debug)]
+struct ConnectionPoint {
+    card_id: Uuid,
+    position: RwSignal<Position>,
+}
+
 #[component]
 pub fn BoardInvestigativo() -> impl IntoView {
     let (cards, set_cards) = create_signal(Vec::<CardEntityState>::new());
@@ -20,7 +26,7 @@ pub fn BoardInvestigativo() -> impl IntoView {
 
     let (global_index, set_global_index) = create_signal(5u64);
     let (begin_new_line_position, set_begin_new_line_position) =
-        create_signal::<Option<RwSignal<Position>>>(None);
+        create_signal::<Option<ConnectionPoint>>(None);
 
     let add_new_entity = move |event: MouseEvent| {
         // Apenas ao duplo click
@@ -45,22 +51,27 @@ pub fn BoardInvestigativo() -> impl IntoView {
         cards()
             .iter()
             .find(|s| s.card.id() == id)
-            .and_then(|s| Some(s.card.position()))
-            .and_then(|current_card_position| {
+            .and_then(|s| Some(s.card))
+            .and_then(|card| {
                 if let Some(begin) = begin_new_line_position() {
-                    let new_line = ConnectionLineData::new(begin, current_card_position);
+                    let end = card.position();
+                    let new_line =
+                        ConnectionLineData::new(begin.card_id, card.id(), begin.position, end);
                     log::info!(
                         "Encerrando a criação de conexão em {:?}",
-                        current_card_position.get_untracked()
+                        end.get_untracked()
                     );
                     set_connection_lines.update(move |lines| lines.push(new_line));
                     set_begin_new_line_position(None);
                 } else {
                     log::info!(
                         "Começando a criar conexão em {:?}",
-                        current_card_position.get_untracked()
+                        card.position().get_untracked()
                     );
-                    set_begin_new_line_position(Some(current_card_position));
+                    set_begin_new_line_position(Some(ConnectionPoint {
+                        card_id: card.id(),
+                        position: card.position(),
+                    }));
                 }
 
                 Some(())
@@ -94,6 +105,20 @@ pub fn BoardInvestigativo() -> impl IntoView {
         });
     };
 
+    let delete_entity = move |_: MouseEvent, data: EntityData| {
+        set_cards.update(|states| {
+            let index = states
+                .iter()
+                .position(|s| s.entity.id() == data.id())
+                .expect("Tentou deletar um card que não existe");
+
+            set_connection_lines.update(|lines| {
+                lines.retain(|l| l.id_begin() != data.id() && l.id_end() != data.id());
+            });
+            states.remove(index);
+        });
+    };
+
     view! {
         <main on:click=add_new_entity>
             <svg>
@@ -120,7 +145,8 @@ pub fn BoardInvestigativo() -> impl IntoView {
                                 fallback=move || view! {
                                     <EntityEdit
                                         data=s.entity
-                                        submit=save_edits/>
+                                        submit_edits_callback=save_edits
+                                        delete_entity_callback=delete_entity />
                                 } >
                                 <EntityInfo
                                     data=s.entity
