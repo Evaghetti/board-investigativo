@@ -46,7 +46,6 @@ where
 
     let click_in_event = move |event: MouseEvent| {
         // Apenas responder ao click com botão esquerdo
-        event.prevent_default();
         event.stop_propagation();
         if event.button() != 0 {
             return;
@@ -87,7 +86,8 @@ where
             event.y() - mouse_offset().1,
         ));
     };
-    window_event_listener(ev::mousemove, mouse_move_event);
+    let handle = window_event_listener(ev::mousemove, mouse_move_event);
+    on_cleanup(|| handle.remove());
 
     let id = data.id;
     view! {
