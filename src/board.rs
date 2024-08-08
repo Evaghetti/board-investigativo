@@ -68,7 +68,7 @@ pub fn BoardInvestigativo() -> impl IntoView {
             .expect("Não deveria ser possível adicionar uma conexão a um card que não existe");
     };
 
-    let save = move |_: MouseEvent, data: EntityData| {
+    let save_edits = move |_: MouseEvent, data: EntityData| {
         set_cards.update(|states| {
             let state = states
                 .iter_mut()
@@ -76,6 +76,21 @@ pub fn BoardInvestigativo() -> impl IntoView {
                 .expect("Tentou editar um card que não existe");
 
             state.editing = false;
+        });
+    };
+
+    let start_editing = move |data: &EntityData| {
+        log::info!("Iniciando editar do {}", data.id());
+
+        set_cards.update(|states| {
+            states
+                .iter_mut()
+                .find(|s| s.entity.id() == data.id())
+                .and_then(|s| {
+                    s.editing = true;
+                    Some(s.editing)
+                })
+                .expect("Tentou iniciar a edição de um card que não existe");
         });
     };
 
@@ -105,9 +120,11 @@ pub fn BoardInvestigativo() -> impl IntoView {
                                 fallback=move || view! {
                                     <EntityEdit
                                         data=s.entity
-                                        submit=save/>
+                                        submit=save_edits/>
                                 } >
-                                <EntityInfo data=s.entity/>
+                                <EntityInfo
+                                    data=s.entity
+                                    start_edit_callback=start_editing/>
                              </Show>
                         </Card>
                     }

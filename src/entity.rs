@@ -32,8 +32,12 @@ impl EntityData {
 }
 
 #[component]
-pub fn EntityInfo(data: EntityData) -> impl IntoView {
+pub fn EntityInfo<StartEditFn>(data: EntityData, start_edit_callback: StartEditFn) -> impl IntoView
+where
+    StartEditFn: Fn(&EntityData) + 'static,
+{
     view! {
+        <button on:click=move |_| start_edit_callback(&data)>Editar</button>
         <img id="profile" src=data.profile_url.get()/>
         <h2>{data.name.get()}</h2>
     }
